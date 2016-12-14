@@ -60,7 +60,7 @@ fin:
 ; 信息显示部分
 msg:
     DB 0x0a, 0x0a ; 换行两次
-    DB “hello, world”
+    DB "hello, world"
     DB 0x0a
     DB 0
 
