@@ -24,32 +24,29 @@ void init_pic(void)
 
 #define PORT_KEYDAT		0x0060
 
-
-struct KEYBUF keybuf;
+struct FIFO8 keyfifo;
 void inthandler21(int *esp)
 {
 	io_out8(PIC0_OCW2, 0x61);
 	
-	if( keybuf.flag == 0){
-		keybuf.data = io_in8(PORT_KEYDAT);
-		keybuf.flag = 1;
-	}
-
+	unsigned char data;
+	io_out8(PIC0_OCW2, 0x61);	
+	data = io_in8(PORT_KEYDAT);
+	fifo8_put(&keyfifo, data);
+	
 	return;
 }
-
+struct FIFO8 mousefifo;
 void inthandler2c(int *esp)
 {
-	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-	boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
-	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 2C (IRQ-12) : PS/2 mouse");
-	for (;;) {
-		io_hlt();
-	}
+	io_out8(PIC1_OCW2, 0x64);
+	io_out8(PIC0_OCW2, 0x62);
+	fifo8_put(&mousefifo, io_in8(PORT_KEYDAT));
+	return;
 }
 
 void inthandler27(int *esp)
 {
-	io_out8(PIC0_OCW2, 0x67); /* IRQ-07受付完了をPICに通知(7-1参照) */
+	io_out8(PIC0_OCW2, 0x67); 
 	return;
 }
