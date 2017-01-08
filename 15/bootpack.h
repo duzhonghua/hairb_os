@@ -186,22 +186,27 @@ void timer_free(struct TIMER *timer);
 void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
-
 struct TSS32 {
 	int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
 	int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
 	int es, cs, ss, ds, fs, gs;
 	int ldtr, iomap;
 };
-
-#define MAX_TASK
+#define TASK_RUNNING 1
+#define TASK_UNALLOCK 0
+#define TASK_STOPPED 2
+struct TASKINFO{
+    struct TSS32 *tss;
+    unsigned int status;
+    unsigned int clt;
+};
+#define MAX_TASK 50
 struct TASKMAN{
-    struct TSS32 tasks[MAX_TASK];
-    struct TSS32 *tasks0[MAX_TASK];
-    
-}
+    struct TASKINFO tasks[MAX_TASK];
+    int running;
+    int count;
+};
 
-void task_switch(struct TASKMAN * taskman){
-    
-}
-
+void task_switch();
+void task_init();
+int task_regsister( int entry, int runing);

@@ -97,8 +97,13 @@ void inthandler20(int *esp)
 	io_out8(PIC0_OCW2, 0x60);	/* 通知PIC IRQ0处理完毕 */
 	timerctl.count++;
 
+
+        
         if (timerctl.next > timerctl.count) {
 	 	/* 没有超时 */
+                if((timerctl.count & 0x00000001)  && (timerctl.count > 100)){
+                     task_switch();
+                }
 		return;
 	}
         
@@ -119,5 +124,8 @@ void inthandler20(int *esp)
 	} else {
 		timerctl.next = 0xffffffff;
 	}
+        if((timerctl.count & 0x00000001) && (timerctl.count > 100)){
+           task_switch();
+        }
 	return;
 }
