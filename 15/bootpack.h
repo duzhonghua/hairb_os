@@ -1,4 +1,6 @@
 /* asmhead.nas */
+
+//#define MY_TASK
 struct BOOTINFO { /* 0x0ff0-0x0fff */
 	char cyls; /* ƒu[ƒgƒZƒNƒ^‚Í‚Ç‚±‚Ü‚ÅƒfƒBƒXƒN‚ð“Ç‚ñ‚¾‚Ì‚© */
 	char leds; /* ƒu[ƒgŽž‚ÌƒL[ƒ{[ƒh‚ÌLED‚Ìó‘Ô */
@@ -176,7 +178,11 @@ struct TIMER {
 };
 struct TIMERCTL {
 	unsigned int count, next;
+	#ifdef MY_TASK
 	struct TIMER *head;
+	#else
+	struct TIMER *t0;	
+	#endif
 	struct TIMER timers0[MAX_TIMER];
 };
 extern struct TIMERCTL timerctl;
@@ -192,6 +198,8 @@ struct TSS32 {
 	int es, cs, ss, ds, fs, gs;
 	int ldtr, iomap;
 };
+
+#ifdef MY_TASK
 #define TASK_RUNNING 1
 #define TASK_UNALLOCK 0
 #define TASK_STOPPED 2
@@ -199,6 +207,7 @@ struct TASKINFO{
     struct TSS32 *tss;
     unsigned int status;
     unsigned int clt;
+    unsigned int runtime;
 };
 #define MAX_TASK 50
 struct TASKMAN{
@@ -210,3 +219,23 @@ struct TASKMAN{
 void task_switch();
 void task_init();
 int task_regsister( int entry, int runing);
+#else
+#define MAX_TASKS		1000	/* 最大タスク数 */
+#define TASK_GDT0		3		/* TSSをGDTの何番から割り当てるのか */
+struct TASK {
+	int sel, flags; /* selはGDTの番号のこと */
+	struct TSS32 tss;
+};
+struct TASKCTL {
+	int running; /* 動作しているタスクの数 */
+	int now; /* 現在動作しているタスクがどれだか分かるようにするための変数 */
+	struct TASK *tasks[MAX_TASKS];
+	struct TASK tasks0[MAX_TASKS];
+};
+extern struct TIMER *task_timer;
+struct TASK *task_init(struct MEMMAN *memman);
+struct TASK *task_alloc(void);
+void task_run(struct TASK *task);
+void task_switch(void);
+
+#endif
